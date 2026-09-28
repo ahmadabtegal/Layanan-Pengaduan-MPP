@@ -974,7 +974,7 @@
               Lampiran
             </h2>
             <p class="text-xs text-slate-500">
-              Opsional. JPG, JPEG, atau PNG maksimal 5 MB.
+              Wajib diunggah. JPG, JPEG, atau PNG maksimal 5 MB.
             </p>
           </div>
         </div>
@@ -985,6 +985,7 @@
           type="file"
           accept=".jpg,.jpeg,.png,image/jpeg,image/png"
           onchange="previewReportFile(this)"
+          required
           class="block w-full text-sm text-slate-500
                  file:mr-4 file:py-2.5 file:px-4
                  file:rounded-lg file:border-0
@@ -2169,6 +2170,7 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
 let currentUser = null;
 let reports = [];
 let publicReports = [];
+let publicStats = null;
 
 let activeView = 'home';
 let dashboardStatusFilter = '';
@@ -3326,6 +3328,9 @@ async function loadPublicReports() {
     publicReports =
       result.reports || [];
 
+    publicStats =
+      result.statistics || null;
+
     renderPublicStats();
     populatePublicCategoryFilter();
     renderPublicReports();
@@ -3340,6 +3345,7 @@ async function loadPublicReports() {
     );
 
     publicReports = [];
+    publicStats = null;
 
     renderPublicStats();
     renderPublicReports();
@@ -3448,38 +3454,44 @@ async function refreshData() {
 
 function renderPublicStats() {
 
-  // Jika sudah login, gunakan data internal agar statistik mencakup
-  // laporan yang belum dipublikasikan. Untuk pengunjung, gunakan data publik.
-  const data =
-    currentUser && reports.length
-      ? reports
-      : (publicReports || []);
+  // Statistik utama berasal dari seluruh laporan di backend,
+  // termasuk laporan rahasia. Data rahasia tetap tidak dikirim
+  // ke feed publik.
+  const stats = publicStats;
 
-  const total = data.length;
+  if (stats) {
+    document.getElementById('public-total').textContent =
+      Number(stats.total || 0);
 
-  const unverified = data.filter(function(r) {
-    return r.status === 'Belum Diverifikasi';
-  }).length;
+    document.getElementById('public-unverified').textContent =
+      Number(stats.unverified || 0);
 
-  const followup = data.filter(function(r) {
-    return [
+    document.getElementById('public-followup').textContent =
+      Number(stats.followup || 0);
+
+    document.getElementById('public-complete').textContent =
+      Number(stats.complete || 0);
+
+    return;
+  }
+
+  // Fallback jika API lama belum mengirim statistics.
+  const data = publicReports || [];
+
+  document.getElementById('public-total').textContent = data.length;
+  document.getElementById('public-unverified').textContent =
+    data.filter(r => r.status === 'Belum Diverifikasi').length;
+  document.getElementById('public-followup').textContent =
+    data.filter(r => [
       'Diteruskan ke Instansi',
       'Dalam Proses',
       'Tindak Lanjut Diberikan',
       'Menunggu Tanggapan Pelapor'
-    ].includes(r.status);
-  }).length;
-
-  const complete = data.filter(function(r) {
-    return r.status === 'Selesai';
-  }).length;
-
-  document.getElementById('public-total').textContent = total;
-  document.getElementById('public-unverified').textContent = unverified;
-  document.getElementById('public-followup').textContent = followup;
-  document.getElementById('public-complete').textContent = complete;
-
+    ].includes(r.status)).length;
+  document.getElementById('public-complete').textContent =
+    data.filter(r => r.status === 'Selesai').length;
 }
+
 
 
 /* =========================================================
@@ -4040,6 +4052,18 @@ async function submitReport(event) {
 
     showToast(
       'Kategori, judul, dan isi laporan wajib diisi.',
+      'warning'
+    );
+
+    return;
+
+  }
+
+
+  if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+
+    showToast(
+      'Lampiran laporan wajib diunggah.',
       'warning'
     );
 
@@ -5808,7 +5832,9 @@ function renderDetail(r, internal) {
 
 
   /* SLA */
-  const detailSlaTarget = getRoleSlaTarget(r);
+  const detailSlaTarget = r.status === 'Selesai'
+    ? null
+    : getRoleSlaTarget(r);
   const detailSlaRemaining = detailSlaTarget
     ? formatRemainingSla(detailSlaTarget.deadline)
     : null;
@@ -5952,13 +5978,14 @@ function renderDetail(r, internal) {
 
 
           <label class="block text-sm font-semibold text-slate-700 mb-2">
-            Lampiran Tindak Lanjut
+            Lampiran Tindak Lanjut *
           </label>
 
           <input
             id="followup-file"
             type="file"
             accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+            required
             class="block w-full text-sm text-slate-500 mb-4"
           >
 
@@ -6204,6 +6231,18 @@ async function prosesTindakLanjut(id) {
 
     showToast(
       'Tindak lanjut wajib diisi.',
+      'warning'
+    );
+
+    return;
+
+  }
+
+
+  if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+
+    showToast(
+      'Lampiran tindak lanjut instansi wajib diunggah.',
       'warning'
     );
 
@@ -6688,76 +6727,51 @@ function slaBadge(r) {
 
 function getRoleSlaTarget(r) {
 
-  if (!currentUser || !r) {
+  if (!r) {
     return null;
   }
 
-  if (currentUser.role === 'admin') {
-    if (r.status === 'Belum Diverifikasi') {
-      return {
-        label: 'Verifikasi',
-        deadline: r.batasVerifikasi
-      };
-    }
-    return null;
+  // SLA ditentukan oleh tahap laporan, bukan oleh role yang sedang melihat.
+  // Dengan demikian kolom/detail SLA tampil untuk semua role yang berhak
+  // melihat laporan.
+  if (r.status === 'Belum Diverifikasi') {
+    return {
+      label: 'Verifikasi',
+      deadline: r.batasVerifikasi,
+      status: r.statusSLAVerifikasi || ''
+    };
   }
 
-  if (currentUser.role === 'admin_instansi') {
-    if (
-      [
-        'Diteruskan ke Instansi',
-        'Dalam Proses'
-      ].includes(r.status)
-    ) {
-      return {
-        label: 'Tindak Lanjut',
-        deadline: r.batasTL
-      };
-    }
-    return null;
+  if ([
+    'Terverifikasi',
+    'Diteruskan ke Instansi',
+    'Dalam Proses',
+    'Tindak Lanjut Diberikan'
+  ].includes(r.status)) {
+    return {
+      label: 'Tindak Lanjut',
+      deadline: r.batasTL,
+      status: r.statusSLATL || ''
+    };
   }
 
-  if (currentUser.role === 'pelapor') {
-    if (r.status === 'Menunggu Tanggapan Pelapor') {
-      return {
-        label: 'Tanggapan',
-        deadline: r.batasTanggapan
-      };
-    }
-    return null;
+  if (r.status === 'Menunggu Tanggapan Pelapor') {
+    return {
+      label: 'Tanggapan Pelapor',
+      deadline: r.batasTanggapan,
+      status: r.statusSLATanggapan || ''
+    };
   }
 
-  if (currentUser.role === 'pimpinan') {
-    if (r.status === 'Belum Diverifikasi') {
-      return {
-        label: 'Verifikasi',
-        deadline: r.batasVerifikasi
-      };
-    }
-
-    if (
-      [
-        'Diteruskan ke Instansi',
-        'Dalam Proses'
-      ].includes(r.status)
-    ) {
-      return {
-        label: 'Tindak Lanjut',
-        deadline: r.batasTL
-      };
-    }
-
-    if (r.status === 'Menunggu Tanggapan Pelapor') {
-      return {
-        label: 'Tanggapan',
-        deadline: r.batasTanggapan
-      };
-    }
+  // Laporan selesai tidak lagi menampilkan hitungan SLA.
+  // roleSlaCell() akan menampilkan label "Selesai".
+  if (r.status === 'Selesai') {
+    return null;
   }
 
   return null;
-
 }
+
 
 
 function formatRemainingSla(deadline) {
@@ -6800,6 +6814,14 @@ function formatRemainingSla(deadline) {
 
 
 function roleSlaCell(r) {
+
+  if (r.status === 'Selesai') {
+    return `
+      <span class="text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-2.5 py-1.5 rounded-lg">
+        Selesai
+      </span>
+    `;
+  }
 
   const target = getRoleSlaTarget(r);
 
