@@ -909,52 +909,21 @@
               Instansi Tujuan
             </label>
 
-            <select
-              id="report-agency"
-              class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            >
-              <option value="" disabled selected>Pilih instansi tujuan</option>
-              <option value="Kepolisian Resor Tegal Kota">Kepolisian Resor Tegal Kota</option>
-              <option value="Pengadilan Negeri Kota Tegal">Pengadilan Negeri Kota Tegal</option>
-              <option value="Kejaksaan Negeri Kota Tegal">Kejaksaan Negeri Kota Tegal</option>
-              <option value="Kantor Kemenag Tegal">Kantor Kemenag Tegal</option>
-              <option value="Kantor Pertanahan Kota Tegal">Kantor Pertanahan Kota Tegal</option>
-              <option value="Kantor Imigrasi Kelas II Non TPI Tegal">Kantor Imigrasi Kelas II Non TPI Tegal</option>
-              <option value="KPP Pratama Tegal">KPP Pratama Tegal</option>
-              <option value="Pengadilan Agama Tegal">Pengadilan Agama Tegal</option>
-              <option value="BNN Kota Tegal">BNN Kota Tegal</option>
-              <option value="Kantor Pengawasan dan Pelayanan Bea dan Cukai Kota Tegal">Kantor Pengawasan dan Pelayanan Bea dan Cukai Kota Tegal</option>
-              <option value="Loka POM di Kabupaten Tegal">Loka POM di Kabupaten Tegal</option>
-              <option value="Kanwil Kemenkum Jawa Tengah">Kanwil Kemenkum Jawa Tengah</option>
-              <option value="BP2MI Jawa Tengah">BP2MI Jawa Tengah</option>
-              <option value="DPMPTSP Provinsi Jawa Tengah">DPMPTSP Provinsi Jawa Tengah</option>
-              <option value="UPPD/Samsat Kota Tegal">UPPD/Samsat Kota Tegal</option>
-              <option value="Badan Keuangan Daerah Kota Tegal">Badan Keuangan Daerah Kota Tegal</option>
-              <option value="Disdikbud Kota Tegal">Disdikbud Kota Tegal</option>
-              <option value="DPUPR Kota Tegal">DPUPR Kota Tegal</option>
-              <option value="Dinas Kesehatan Kota Tegal">Dinas Kesehatan Kota Tegal</option>
-              <option value="Disdukcapil Kota Tegal">Disdukcapil Kota Tegal</option>
-              <option value="Dinas Perhubungan Kota Tegal">Dinas Perhubungan Kota Tegal</option>
-              <option value="Diskop UKM Perdagangan Kota Tegal">Diskop UKM Perdagangan Kota Tegal</option>
-              <option value="Disnakerin Kota Tegal">Disnakerin Kota Tegal</option>
-              <option value="Disperkim Kota Tegal">Disperkim Kota Tegal</option>
-              <option value="DKPPP Kota Tegal">DKPPP Kota Tegal</option>
-              <option value="DLH Kota Tegal">DLH Kota Tegal</option>
-              <option value="DPMPTSP Kota Tegal">DPMPTSP Kota Tegal</option>
-              <option value="Dinas Sosial Kota Tegal">Dinas Sosial Kota Tegal</option>
-              <option value="Dinas Arpusda Kota Tegal">Dinas Arpusda Kota Tegal</option>
-              <option value="LPSE Kota Tegal">LPSE Kota Tegal</option>
-              <option value="Perumda Air Minum Tirta Bahari Kota Tegal">Perumda Air Minum Tirta Bahari Kota Tegal</option>
-              <option value="Bank Jateng Cabang Koordinator Tegal">Bank Jateng Cabang Koordinator Tegal</option>
-              <option value="BPJS Ketenagakerjaan Cabang Tegal">BPJS Ketenagakerjaan Cabang Tegal</option>
-              <option value="BPJS Kesehatan Cabang Tegal">BPJS Kesehatan Cabang Tegal</option>
-              <option value="PT. PLN (Persero) Area Tegal">PT. PLN (Persero) Area Tegal</option>
-              <option value="PT. Taspen (Persero) Pekalongan">PT. Taspen (Persero) Pekalongan</option>
-              <option value="PT. POS Indonesia (persero) Cabang Tegal">PT. POS Indonesia (persero) Cabang Tegal</option>
-              <option value="PT. Pegadaian Cabang Tegal">PT. Pegadaian Cabang Tegal</option>
-              <option value="Ketua Baznas Kota Tegal">Ketua Baznas Kota Tegal</option>
-              <option value="ASITA Tegal">ASITA Tegal</option>
-            </select>
+            <div class="relative">
+              <input
+                id="report-agency"
+                type="text"
+                autocomplete="off"
+                placeholder="Ketik untuk mencari instansi..."
+                onfocus="showAgencyDropdown('report-agency')"
+                oninput="filterAgencyDropdown('report-agency')"
+                class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+              <div
+                id="report-agency-dropdown"
+                class="hidden absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg"
+              ></div>
+            </div>
           </div>
 
         </div>
@@ -5859,9 +5828,11 @@ function renderDetail(r, internal) {
 
         ${detailField(
           'Batas SLA',
-          detailSlaTarget && detailSlaTarget.deadline
-            ? formatDateTime(detailSlaTarget.deadline)
-            : 'Belum ditentukan'
+          r.status === 'Selesai'
+            ? 'Selesai'
+            : (detailSlaTarget && detailSlaTarget.deadline
+                ? formatDateTime(detailSlaTarget.deadline)
+                : 'Belum ditentukan')
         )}
 
         ${detailField(
@@ -5908,12 +5879,22 @@ function renderDetail(r, internal) {
 
           <div class="grid md:grid-cols-2 gap-3 mb-3">
 
-            <select
-              id="verify-agency"
-              class="px-4 py-3 rounded-xl border border-slate-300 bg-white"
-            >
-              ${agencyOptions(r.instansi)}
-            </select>
+            <div class="relative">
+              <input
+                id="verify-agency"
+                type="text"
+                autocomplete="off"
+                value="${escapeAttr(r.instansi || '')}"
+                placeholder="Ketik untuk mencari / mengganti instansi..."
+                onfocus="showAgencyDropdown('verify-agency')"
+                oninput="filterAgencyDropdown('verify-agency')"
+                class="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+              <div
+                id="verify-agency-dropdown"
+                class="hidden absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg"
+              ></div>
+            </div>
 
             <select
               id="verify-status"
@@ -6461,7 +6442,7 @@ async function prosesTanggapanPelapor(id) {
    AGENCY OPTIONS
 ========================================================= */
 
-function agencyOptions(selected) {
+function getAgencyList() {
 
   const agencies = [
     'Kepolisian Resor Tegal Kota',
@@ -6506,20 +6487,73 @@ function agencyOptions(selected) {
     'ASITA Tegal'
   ];
 
+  return agencies.sort((a, b) =>
+    a.localeCompare(b, 'id', { sensitivity: 'base' })
+  );
+}
 
-  return agencies.map(function(a) {
+function renderAgencyDropdown(inputId) {
 
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(inputId + '-dropdown');
+  if (!input || !dropdown) return;
+
+  const query = (input.value || '').toLowerCase().trim();
+  const agencies = getAgencyList().filter(function(a) {
+    return !query || a.toLowerCase().includes(query);
+  });
+
+  if (!agencies.length) {
+    dropdown.innerHTML = '<div class="px-4 py-3 text-sm text-slate-500">Instansi tidak ditemukan.</div>';
+  } else {
+    dropdown.innerHTML = agencies.map(function(a) {
+      return `<button type="button" class="block w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-700 border-b border-slate-100 last:border-b-0" onclick="selectAgencyOption('${escapeJs(inputId)}', '${escapeJs(a)}')">${escapeHtml(a)}</button>`;
+    }).join('');
+  }
+
+  dropdown.classList.remove('hidden');
+}
+
+function showAgencyDropdown(inputId) {
+  renderAgencyDropdown(inputId);
+}
+
+function filterAgencyDropdown(inputId) {
+  renderAgencyDropdown(inputId);
+}
+
+function selectAgencyOption(inputId, agency) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(inputId + '-dropdown');
+  if (input) input.value = agency;
+  if (dropdown) dropdown.classList.add('hidden');
+}
+
+document.addEventListener('click', function(event) {
+  ['report-agency', 'verify-agency'].forEach(function(inputId) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(inputId + '-dropdown');
+    if (!input || !dropdown) return;
+    if (!input.parentElement.contains(event.target)) {
+      dropdown.classList.add('hidden');
+    }
+  });
+});
+
+
+/* =========================================================
+   AGENCY OPTIONS (compatibility)
+========================================================= */
+
+function agencyOptions(selected) {
+
+  return getAgencyList().map(function(a) {
     return `
-      <option
-        value="${escapeAttr(a)}"
-        ${a === selected ? 'selected' : ''}
-      >
+      <option value="${escapeAttr(a)}" ${a === selected ? 'selected' : ''}>
         ${escapeHtml(a)}
       </option>
     `;
-
   }).join('');
-
 }
 
 
