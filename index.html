@@ -609,6 +609,28 @@
   </div>
 
 
+  <!-- DAFTAR INSTANSI -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+    <div class="text-center max-w-3xl mx-auto mb-8">
+      <div class="text-teal-600 text-sm font-bold uppercase tracking-wider mb-2">
+        Instansi Layanan
+      </div>
+      <h2 class="text-3xl font-extrabold text-slate-800">Daftar Instansi</h2>
+      <p class="text-slate-500 mt-3">Pilih instansi tujuan yang sesuai dengan jenis laporan atau layanan yang Anda sampaikan.</p>
+    </div>
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-7">
+      <div class="flex flex-col sm:flex-row gap-3 mb-5">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input id="public-agency-search" type="text" autocomplete="off" placeholder="Cari instansi..." oninput="renderPublicAgencyList()" class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500">
+        </div>
+        <div class="text-sm text-slate-500 flex items-center sm:px-2"><span id="public-agency-count"></span></div>
+      </div>
+      <div id="public-agency-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+    </div>
+  </section>
+
+
   <!-- WORKFLOW -->
   <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
 
@@ -2185,6 +2207,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   updateUIForRole();
   renderPublicStats();
+  renderPublicAgencyList();
   updateRoleSlaCountdowns();
 
   // Countdown SLA diperbarui setiap menit tanpa perlu memuat ulang data.
@@ -6483,13 +6506,16 @@ function getAgencyList() {
     'PT. Taspen (Persero) Pekalongan',
     'PT. POS Indonesia (persero) Cabang Tegal',
     'PT. Pegadaian Cabang Tegal',
-    'Ketua Baznas Kota Tegal',
+    'Baznas Kota Tegal',
     'ASITA Tegal'
   ];
 
-  return agencies.sort((a, b) =>
+  agencies.sort((a, b) =>
     a.localeCompare(b, 'id', { sensitivity: 'base' })
   );
+
+  // Manajemen MPP selalu ditampilkan paling atas.
+  return ['Manajemen MPP'].concat(agencies);
 }
 
 function renderAgencyDropdown(inputId) {
@@ -6553,6 +6579,44 @@ function agencyOptions(selected) {
         ${escapeHtml(a)}
       </option>
     `;
+  }).join('');
+}
+
+
+/* =========================================================
+   PUBLIC AGENCY LIST
+========================================================= */
+
+function renderPublicAgencyList() {
+  const container = document.getElementById('public-agency-list');
+  const searchInput = document.getElementById('public-agency-search');
+  const count = document.getElementById('public-agency-count');
+  if (!container) return;
+
+  const query = searchInput ? (searchInput.value || '').toLowerCase().trim() : '';
+  const agencies = getAgencyList().filter(function(a) {
+    return !query || a.toLowerCase().includes(query);
+  });
+
+  if (count) count.textContent = agencies.length + ' instansi';
+
+  if (!agencies.length) {
+    container.innerHTML = '<div class="sm:col-span-2 lg:col-span-3 text-center py-8 text-sm text-slate-500"><i class="fa-solid fa-circle-exclamation mr-2"></i>Instansi tidak ditemukan.</div>';
+    return;
+  }
+
+  container.innerHTML = agencies.map(function(a) {
+    const isManagement = a === 'Manajemen MPP';
+    return `
+      <div class="flex items-center gap-3 rounded-xl border ${isManagement ? 'border-teal-200 bg-teal-50' : 'border-slate-200 bg-slate-50'} px-4 py-3">
+        <div class="w-9 h-9 rounded-lg ${isManagement ? 'bg-teal-600 text-white' : 'bg-white text-teal-600 border border-slate-200'} flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid ${isManagement ? 'fa-building-columns' : 'fa-building'}"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="font-semibold text-sm ${isManagement ? 'text-teal-800' : 'text-slate-700'}">${escapeHtml(a)}</div>
+          <div class="text-xs ${isManagement ? 'text-teal-600' : 'text-slate-400'} mt-0.5">${isManagement ? 'Manajemen MPP' : 'Instansi tujuan laporan'}</div>
+        </div>
+      </div>`;
   }).join('');
 }
 
