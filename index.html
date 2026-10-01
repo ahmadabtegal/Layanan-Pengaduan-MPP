@@ -365,6 +365,16 @@
         </div>
 
         <button
+          id="profile-btn"
+          onclick="openProfileModal()"
+          class="hidden px-3 py-2 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 text-sm font-semibold"
+          title="Profil saya"
+        >
+          <i class="fa-solid fa-user-gear mr-1"></i>
+          Profil
+        </button>
+
+        <button
           id="login-btn"
           onclick="openAuthModal('login')"
           class="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold"
@@ -436,6 +446,15 @@
     >
       <i class="fa-solid fa-gauge mr-1"></i>
       Dashboard
+    </button>
+
+    <button
+      id="mobile-profile-btn"
+      onclick="openProfileModal()"
+      class="hidden px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap bg-slate-100"
+    >
+      <i class="fa-solid fa-user-gear mr-1"></i>
+      Profil
     </button>
 
     <button
@@ -1276,13 +1295,22 @@
         </p>
       </div>
 
-      <button
-        onclick="refreshData()"
-        class="px-4 py-3 rounded-xl border border-slate-300 bg-white font-semibold text-slate-600 hover:bg-slate-50"
-      >
-        <i class="fa-solid fa-rotate mr-2"></i>
-        Refresh Data
-      </button>
+      <div class="flex flex-wrap gap-2">
+        <button
+          onclick="exportReports()"
+          class="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+        >
+          <i class="fa-solid fa-file-excel mr-2"></i>
+          Export Laporan
+        </button>
+        <button
+          onclick="refreshData()"
+          class="px-4 py-3 rounded-xl border border-slate-300 bg-white font-semibold text-slate-600 hover:bg-slate-50"
+        >
+          <i class="fa-solid fa-rotate mr-2"></i>
+          Refresh Data
+        </button>
+      </div>
 
     </div>
 
@@ -1945,6 +1973,12 @@
 
       </div>
 
+      <div id="forgot-password-link" class="text-right -mt-2 mb-5">
+        <button type="button" onclick="openForgotPasswordModal()" class="text-sm font-semibold text-teal-700 hover:underline">
+          Lupa password?
+        </button>
+      </div>
+
 
       <!-- REGISTER -->
       <div id="register-fields" class="hidden">
@@ -2067,6 +2101,74 @@
 
 
 <!-- =========================================================
+     FORGOT PASSWORD MODAL
+========================================================= -->
+<div id="forgot-password-modal" class="fixed inset-0 z-[80] hidden modal-backdrop items-center justify-center px-4 py-6">
+  <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden">
+    <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+      <div>
+        <div class="text-xs text-teal-600 font-bold uppercase">Pemulihan Akun</div>
+        <h2 class="text-xl font-extrabold text-slate-800 mt-1">Lupa Password</h2>
+      </div>
+      <button onclick="closeForgotPasswordModal()" class="w-10 h-10 rounded-xl hover:bg-slate-100 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-6">
+      <div class="text-sm text-slate-500 mb-4">Kode OTP akan dikirim ke WhatsApp yang terdaftar pada akun.</div>
+      <div id="forgot-step-1">
+        <label class="block text-sm font-semibold mb-1">Email atau NIK</label>
+        <input id="forgot-identifier" class="w-full px-4 py-3 rounded-xl border border-slate-300" placeholder="Email atau NIK">
+        <button onclick="requestForgotPassword()" class="w-full mt-4 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold">Kirim OTP WhatsApp</button>
+      </div>
+      <div id="forgot-step-2" class="hidden">
+        <label class="block text-sm font-semibold mb-1">OTP</label>
+        <input id="forgot-otp" inputmode="numeric" maxlength="6" class="w-full px-4 py-3 rounded-xl border border-slate-300" placeholder="6 digit OTP">
+        <label class="block text-sm font-semibold mb-1 mt-4">Password Baru</label>
+        <input id="forgot-new-password" type="password" minlength="6" class="w-full px-4 py-3 rounded-xl border border-slate-300" placeholder="Minimal 6 karakter">
+        <button onclick="resetForgotPassword()" class="w-full mt-4 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold">Simpan Password Baru</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     PROFILE MODAL
+========================================================= -->
+<div id="profile-modal" class="fixed inset-0 z-[80] hidden modal-backdrop items-center justify-center px-4 py-6">
+  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden">
+    <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+      <div><div class="text-xs text-teal-600 font-bold uppercase">Akun</div><h2 class="text-xl font-extrabold text-slate-800 mt-1">Profil Pengguna</h2></div>
+      <button onclick="closeProfileModal()" class="w-10 h-10 rounded-xl hover:bg-slate-100 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="grid md:grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1">Nama</label><input id="profile-name" class="w-full px-4 py-3 rounded-xl border border-slate-300"></div>
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1">Nomor WhatsApp</label><input id="profile-phone" class="w-full px-4 py-3 rounded-xl border border-slate-300"></div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1">Email</label><input id="profile-email" disabled class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50"></div>
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1">Role</label><input id="profile-role" disabled class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50"></div>
+      </div>
+      <div><label class="block text-xs font-semibold text-slate-500 mb-1">Instansi</label><input id="profile-agency" disabled class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50"></div>
+      <div class="flex flex-wrap gap-2 pt-2">
+        <button onclick="saveProfile()" class="px-4 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Profil</button>
+        <button onclick="openChangePasswordModal()" class="px-4 py-3 rounded-xl border border-slate-300 font-bold text-slate-700"><i class="fa-solid fa-key mr-2"></i>Ubah Password</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div id="change-password-modal" class="fixed inset-0 z-[90] hidden modal-backdrop items-center justify-center px-4 py-6">
+  <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl p-6">
+    <div class="flex items-center justify-between mb-5"><h2 class="text-xl font-extrabold">Ubah Password</h2><button onclick="closeChangePasswordModal()" class="w-9 h-9 rounded-lg hover:bg-slate-100"><i class="fa-solid fa-xmark"></i></button></div>
+    <label class="block text-sm font-semibold mb-1">Password Lama</label><input id="current-password" type="password" class="w-full px-4 py-3 rounded-xl border border-slate-300 mb-4">
+    <label class="block text-sm font-semibold mb-1">Password Baru</label><input id="new-password" type="password" minlength="6" class="w-full px-4 py-3 rounded-xl border border-slate-300 mb-4">
+    <label class="block text-sm font-semibold mb-1">Ulangi Password Baru</label><input id="new-password-confirm" type="password" minlength="6" class="w-full px-4 py-3 rounded-xl border border-slate-300">
+    <button onclick="changePassword()" class="w-full mt-5 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold">Simpan Password</button>
+  </div>
+</div>
+
+<!-- =========================================================
      DETAIL MODAL
 ========================================================= -->
 <div
@@ -2162,6 +2264,7 @@ let currentUser = null;
 let reports = [];
 let publicReports = [];
 let publicStats = null;
+let agencyDirectory = [];
 
 let activeView = 'home';
 let dashboardStatusFilter = '';
@@ -2195,6 +2298,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }, 500);
   }
 
+  await loadAgencyDirectory();
   await loadPublicReports();
 
   if (currentUser && currentUser.token) {
@@ -2548,11 +2652,14 @@ function renderAuthMode() {
   const switchBtn =
     document.getElementById('auth-switch-btn');
 
+  const forgotLink = document.getElementById('forgot-password-link');
+
 
   if (authMode === 'login') {
 
     loginFields.classList.remove('hidden');
     registerFields.classList.add('hidden');
+    if (forgotLink) forgotLink.classList.remove('hidden');
 
     // Field login harus aktif hanya saat mode login.
     // Jika tetap required saat mode daftar, browser akan menolak
@@ -2587,6 +2694,7 @@ function renderAuthMode() {
 
     loginFields.classList.add('hidden');
     registerFields.classList.remove('hidden');
+    if (forgotLink) forgotLink.classList.add('hidden');
 
     // Nonaktifkan field login agar validasi HTML5 tidak menghalangi
     // pendaftaran ketika input login masih kosong.
@@ -2810,6 +2918,45 @@ async function submitAuth(event) {
 
 
 /* =========================================================
+   PROFILE / PASSWORD
+========================================================= */
+function openProfileModal() {
+  if (!currentUser) return openAuthModal('login');
+  document.getElementById('profile-name').value = currentUser.nama || '';
+  document.getElementById('profile-phone').value = currentUser.noHp || '';
+  document.getElementById('profile-email').value = currentUser.email || '';
+  document.getElementById('profile-role').value = roleLabel(currentUser.role);
+  document.getElementById('profile-agency').value = currentUser.instansi || (currentUser.role === 'admin' ? 'Manajemen MPP' : '-');
+  const m=document.getElementById('profile-modal'); m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeProfileModal(){ const m=document.getElementById('profile-modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+async function saveProfile(){
+  const nama=document.getElementById('profile-name').value.trim(); const noHp=document.getElementById('profile-phone').value.trim();
+  try{ showLoading('Menyimpan profil...'); const result=await apiPost('updateProfile',{token:currentUser.token,nama:nama,noHp:noHp}); saveSession(result.user); updateUIForRole(); closeProfileModal(); showToast('Profil berhasil diperbarui.'); }catch(e){showToast(e.message||'Gagal memperbarui profil.','error');}finally{hideLoading();}
+}
+function openChangePasswordModal(){ closeProfileModal(); const m=document.getElementById('change-password-modal'); m.classList.remove('hidden'); m.classList.add('flex'); }
+function closeChangePasswordModal(){ const m=document.getElementById('change-password-modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+async function changePassword(){
+  const currentPassword=document.getElementById('current-password').value; const newPassword=document.getElementById('new-password').value; const confirm=document.getElementById('new-password-confirm').value;
+  if(newPassword!==confirm){showToast('Konfirmasi password baru tidak sama.','warning');return;}
+  try{showLoading('Mengubah password...'); await apiPost('changePassword',{token:currentUser.token,currentPassword:currentPassword,newPassword:newPassword}); closeChangePasswordModal(); showToast('Password berhasil diubah.'); document.getElementById('current-password').value='';document.getElementById('new-password').value='';document.getElementById('new-password-confirm').value='';}catch(e){showToast(e.message||'Gagal mengubah password.','error');}finally{hideLoading();}
+}
+function openForgotPasswordModal(){ closeAuthModal(); const m=document.getElementById('forgot-password-modal'); m.classList.remove('hidden'); m.classList.add('flex'); document.getElementById('forgot-step-1').classList.remove('hidden'); document.getElementById('forgot-step-2').classList.add('hidden'); }
+function closeForgotPasswordModal(){ const m=document.getElementById('forgot-password-modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+async function requestForgotPassword(){
+  const identifier=document.getElementById('forgot-identifier').value.trim(); if(!identifier){showToast('Email atau NIK wajib diisi.','warning');return;}
+  try{showLoading('Mengirim OTP WhatsApp...'); await apiPost('forgotPassword',{identifier:identifier}); document.getElementById('forgot-step-1').classList.add('hidden'); document.getElementById('forgot-step-2').classList.remove('hidden'); showToast('OTP telah dikirim ke WhatsApp terdaftar.');}catch(e){showToast(e.message||'Gagal mengirim OTP.','error');}finally{hideLoading();}
+}
+async function resetForgotPassword(){
+  const identifier=document.getElementById('forgot-identifier').value.trim(); const otp=document.getElementById('forgot-otp').value.trim(); const newPassword=document.getElementById('forgot-new-password').value;
+  try{showLoading('Menyimpan password baru...'); await apiPost('resetPassword',{identifier:identifier,otp:otp,newPassword:newPassword}); closeForgotPasswordModal(); openAuthModal('login'); document.getElementById('login-identity').value=identifier; showToast('Password berhasil diubah. Silakan login.');}catch(e){showToast(e.message||'OTP/password tidak valid.','error');}finally{hideLoading();}
+}
+
+async function exportReports(){
+  try{showLoading('Menyiapkan export laporan...'); const result=await apiPost('exportReports',{token:currentUser.token}); const csv=[result.headers].concat(result.rows).map(function(row){return row.map(function(v){let x=String(v==null?'':v); return '"'+x.replace(/"/g,'""')+'"';}).join(',');}).join('\r\n'); const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=result.filename||'Laporan_Pengaduan_MPP.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast('Export laporan berhasil.');}catch(e){showToast(e.message||'Gagal export laporan.','error');}finally{hideLoading();}
+}
+
+/* =========================================================
    LOGOUT
 ========================================================= */
 
@@ -2916,6 +3063,9 @@ function updateUIForRole() {
   const loginBtn =
     document.getElementById('login-btn');
 
+  const profileBtn = document.getElementById('profile-btn');
+  const mobileProfileBtn = document.getElementById('mobile-profile-btn');
+
   const registerBtn =
     document.getElementById('register-btn');
 
@@ -2963,6 +3113,8 @@ function updateUIForRole() {
 
 
   loginBtn.classList.add('hidden');
+  profileBtn.classList.add('hidden');
+  mobileProfileBtn.classList.add('hidden');
   registerBtn.classList.add('hidden');
   logoutBtn.classList.add('hidden');
   userInfo.classList.add('hidden');
@@ -3012,6 +3164,8 @@ function updateUIForRole() {
 
 
   logoutBtn.classList.remove('hidden');
+  profileBtn.classList.remove('hidden');
+  mobileProfileBtn.classList.remove('hidden');
   userInfo.classList.remove('hidden');
   userInfo.classList.add('flex');
 
@@ -3305,6 +3459,28 @@ function handleCreateReportButton() {
 
 }
 
+
+/* =========================================================
+   AGENCY DIRECTORY
+========================================================= */
+async function loadAgencyDirectory() {
+  try {
+    const result = await apiGet('getAgencies');
+    agencyDirectory = Array.isArray(result.agencies) ? result.agencies : [];
+    renderPublicAgencyList();
+  } catch (error) {
+    console.warn('Gagal memuat daftar instansi:', error);
+    agencyDirectory = [];
+  }
+}
+
+function getAgencyList() {
+  if (agencyDirectory.length) return agencyDirectory.map(function(x){ return x.name; });
+  const agencies = [
+    'Manajemen MPP','Kepolisian Resor Tegal Kota','Pengadilan Negeri Kota Tegal','Kejaksaan Negeri Kota Tegal','Kantor Kemenag Tegal','Kantor Pertanahan Kota Tegal','Kantor Imigrasi Kelas II Non TPI Tegal','KPP Pratama Tegal','Pengadilan Agama Tegal','BNN Kota Tegal','Kantor Pengawasan dan Pelayanan Bea dan Cukai Kota Tegal','Loka POM di Kabupaten Tegal','Kanwil Kemenkum Jawa Tengah','BP2MI Jawa Tengah','DPMPTSP Provinsi Jawa Tengah','UPPD/Samsat Kota Tegal','Badan Keuangan Daerah Kota Tegal','Disdikbud Kota Tegal','DPUPR Kota Tegal','Dinas Kesehatan Kota Tegal','Disdukcapil Kota Tegal','Dinas Perhubungan Kota Tegal','Diskop UKM Perdagangan Kota Tegal','Disnakerin Kota Tegal','Disperkim Kota Tegal','DKPPP Kota Tegal','DLH Kota Tegal','DPMPTSP Kota Tegal','Dinas Sosial Kota Tegal','Dinas Arpusda Kota Tegal','LPSE Kota Tegal','Perumda Air Minum Tirta Bahari Kota Tegal','Bank Jateng Cabang Koordinator Tegal','BPJS Ketenagakerjaan Cabang Tegal','BPJS Kesehatan Cabang Tegal','PT. PLN (Persero) Area Tegal','PT. Taspen (Persero) Pekalongan','PT. POS Indonesia (persero) Cabang Tegal','PT. Pegadaian Cabang Tegal','Ketua Baznas Kota Tegal','ASITA Tegal'
+  ];
+  return agencies;
+}
 
 /* =========================================================
    PUBLIC REPORTS
@@ -5680,6 +5856,15 @@ function renderDetail(r, internal) {
   }
 
 
+  if (r.tanggapanAwal) {
+    html += `
+      <div class="mb-6">
+        <h3 class="font-bold text-slate-800 mb-3"><i class="fa-solid fa-message mr-2 text-teal-600"></i>Tanggapan Awal Admin MPP</h3>
+        <div class="bg-teal-50 border border-teal-100 rounded-xl p-4 text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(r.tanggapanAwal)}</div>
+      </div>`;
+  }
+
+
   /* VERIFICATION */
   if (
     r.catatanVerifikasi ||
@@ -5822,6 +6007,21 @@ function renderDetail(r, internal) {
 
   }
 
+
+  /* RIWAYAT / CHAT TIMELINE */
+  if (Array.isArray(r.riwayat) && r.riwayat.length) {
+    html += `
+      <div class="mb-7">
+        <h3 class="font-bold text-slate-800 mb-3"><i class="fa-solid fa-comments mr-2 text-teal-600"></i>Riwayat Laporan</h3>
+        <div class="space-y-4">
+          ${r.riwayat.map(function(item){
+            const role = roleLabel(item.role);
+            const who = item.nama || role;
+            return `<div class="flex gap-3"><div class="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center shrink-0 font-bold">${escapeHtml((who||'U').charAt(0).toUpperCase())}</div><div class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-4"><div class="flex flex-wrap items-center justify-between gap-2"><div><span class="font-bold text-slate-800">${escapeHtml(who)}</span><span class="ml-2 text-xs text-slate-500">${escapeHtml(role)}</span>${item.instansi?`<span class="ml-2 text-xs text-teal-600">${escapeHtml(item.instansi)}</span>`:''}</div><div class="text-xs text-slate-400">${formatDateTime(item.timestamp)}</div></div><div class="text-sm font-semibold text-slate-700 mt-2">${escapeHtml(item.aksi)}</div><div class="text-sm text-slate-600 mt-1 whitespace-pre-wrap">${escapeHtml(item.catatan||'')}</div>${item.lampiran?`<a href="${escapeAttr(item.lampiran)}" target="_blank" rel="noopener noreferrer" class="inline-flex mt-3 px-3 py-2 rounded-lg bg-white border text-xs font-bold text-teal-700">Lihat lampiran</a>`:''}</div></div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
 
   /* SLA */
   const detailSlaTarget = r.status === 'Selesai'
@@ -6465,59 +6665,6 @@ async function prosesTanggapanPelapor(id) {
    AGENCY OPTIONS
 ========================================================= */
 
-function getAgencyList() {
-
-  const agencies = [
-    'Kepolisian Resor Tegal Kota',
-    'Pengadilan Negeri Kota Tegal',
-    'Kejaksaan Negeri Kota Tegal',
-    'Kantor Kemenag Tegal',
-    'Kantor Pertanahan Kota Tegal',
-    'Kantor Imigrasi Kelas II Non TPI Tegal',
-    'KPP Pratama Tegal',
-    'Pengadilan Agama Tegal',
-    'BNN Kota Tegal',
-    'Kantor Pengawasan dan Pelayanan Bea dan Cukai Kota Tegal',
-    'Loka POM di Kabupaten Tegal',
-    'Kanwil Kemenkum Jawa Tengah',
-    'BP2MI Jawa Tengah',
-    'DPMPTSP Provinsi Jawa Tengah',
-    'UPPD/Samsat Kota Tegal',
-    'Badan Keuangan Daerah Kota Tegal',
-    'Disdikbud Kota Tegal',
-    'DPUPR Kota Tegal',
-    'Dinas Kesehatan Kota Tegal',
-    'Disdukcapil Kota Tegal',
-    'Dinas Perhubungan Kota Tegal',
-    'Diskop UKM Perdagangan Kota Tegal',
-    'Disnakerin Kota Tegal',
-    'Disperkim Kota Tegal',
-    'DKPPP Kota Tegal',
-    'DLH Kota Tegal',
-    'DPMPTSP Kota Tegal',
-    'Dinas Sosial Kota Tegal',
-    'Dinas Arpusda Kota Tegal',
-    'LPSE Kota Tegal',
-    'Perumda Air Minum Tirta Bahari Kota Tegal',
-    'Bank Jateng Cabang Koordinator Tegal',
-    'BPJS Ketenagakerjaan Cabang Tegal',
-    'BPJS Kesehatan Cabang Tegal',
-    'PT. PLN (Persero) Area Tegal',
-    'PT. Taspen (Persero) Pekalongan',
-    'PT. POS Indonesia (persero) Cabang Tegal',
-    'PT. Pegadaian Cabang Tegal',
-    'Baznas Kota Tegal',
-    'ASITA Tegal'
-  ];
-
-  agencies.sort((a, b) =>
-    a.localeCompare(b, 'id', { sensitivity: 'base' })
-  );
-
-  // Manajemen MPP selalu ditampilkan paling atas.
-  return ['Manajemen MPP'].concat(agencies);
-}
-
 function renderAgencyDropdown(inputId) {
 
   const input = document.getElementById(inputId);
@@ -6592,34 +6739,16 @@ function renderPublicAgencyList() {
   const searchInput = document.getElementById('public-agency-search');
   const count = document.getElementById('public-agency-count');
   if (!container) return;
-
   const query = searchInput ? (searchInput.value || '').toLowerCase().trim() : '';
-  const agencies = getAgencyList().filter(function(a) {
-    return !query || a.toLowerCase().includes(query);
-  });
-
+  const agencies = (agencyDirectory.length ? agencyDirectory : getAgencyList().map(function(name){return {name:name,logo:''};})).filter(function(a){ return !query || a.name.toLowerCase().includes(query); });
   if (count) count.textContent = agencies.length + ' instansi';
-
-  if (!agencies.length) {
-    container.innerHTML = '<div class="sm:col-span-2 lg:col-span-3 text-center py-8 text-sm text-slate-500"><i class="fa-solid fa-circle-exclamation mr-2"></i>Instansi tidak ditemukan.</div>';
-    return;
-  }
-
+  if (!agencies.length) { container.innerHTML='<div class="sm:col-span-2 lg:col-span-3 text-center py-8 text-sm text-slate-500">Instansi tidak ditemukan.</div>'; return; }
   container.innerHTML = agencies.map(function(a) {
-    const isManagement = a === 'Manajemen MPP';
-    return `
-      <div class="flex items-center gap-3 rounded-xl border ${isManagement ? 'border-teal-200 bg-teal-50' : 'border-slate-200 bg-slate-50'} px-4 py-3">
-        <div class="w-9 h-9 rounded-lg ${isManagement ? 'bg-teal-600 text-white' : 'bg-white text-teal-600 border border-slate-200'} flex items-center justify-center flex-shrink-0">
-          <i class="fa-solid ${isManagement ? 'fa-building-columns' : 'fa-building'}"></i>
-        </div>
-        <div class="min-w-0">
-          <div class="font-semibold text-sm ${isManagement ? 'text-teal-800' : 'text-slate-700'}">${escapeHtml(a)}</div>
-          <div class="text-xs ${isManagement ? 'text-teal-600' : 'text-slate-400'} mt-0.5">${isManagement ? 'Manajemen MPP' : 'Instansi tujuan laporan'}</div>
-        </div>
-      </div>`;
+    const isManagement = a.name === 'Manajemen MPP';
+    const logo = a.logo ? `<img src="${escapeAttr(a.logo)}" alt="Logo ${escapeAttr(a.name)}" class="w-full h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"><i class="fa-solid ${isManagement?'fa-building-columns':'fa-building'} hidden"></i>` : `<i class="fa-solid ${isManagement?'fa-building-columns':'fa-building'}"></i>`;
+    return `<div class="flex items-center gap-3 rounded-xl border ${isManagement?'border-teal-200 bg-teal-50':'border-slate-200 bg-slate-50'} px-4 py-3"><div class="w-11 h-11 rounded-lg bg-white ${isManagement?'text-teal-600':'text-slate-500'} border border-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden">${logo}</div><div class="min-w-0"><div class="font-semibold text-sm ${isManagement?'text-teal-800':'text-slate-700'}">${escapeHtml(a.name)}</div><div class="text-xs text-slate-400 mt-0.5">${isManagement?'Manajemen MPP':'Instansi tujuan laporan'}</div></div></div>`;
   }).join('');
 }
-
 
 /* =========================================================
    PERMISSIONS
