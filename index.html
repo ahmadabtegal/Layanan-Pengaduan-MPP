@@ -5190,97 +5190,71 @@ function renderPimpinanAnalytics() {
 
 
 function renderSLAAnalysis(data) {
-
   const stages = [
-    {
-      key: 'statusSLAVerifikasi',
-      dateKey: 'batasVerifikasi',
-      label: 'Verifikasi',
-      onId: 'sla-verifikasi-on',
-      overId: 'sla-verifikasi-over',
-      percentId: 'sla-verifikasi-persen'
-    },
-    {
-      key: 'statusSLATL',
-      dateKey: 'batasTL',
-      label: 'Tindak Lanjut',
-      onId: 'sla-tl-on',
-      overId: 'sla-tl-over',
-      percentId: 'sla-tl-persen'
-    },
-    {
-      key: 'statusSLATanggapan',
-      dateKey: 'batasTanggapan',
-      label: 'Tanggapan Pelapor',
-      onId: 'sla-tanggapan-on',
-      overId: 'sla-tanggapan-over',
-      percentId: 'sla-tanggapan-persen'
-    }
+    { key:'statusSLAVerifikasi', deadlineKey:'batasVerifikasi', doneKey:'tglVerifikasi', label:'Verifikasi', onId:'sla-verifikasi-on', overId:'sla-verifikasi-over', percentId:'sla-verifikasi-persen' },
+    { key:'statusSLATL', deadlineKey:'batasTL', doneKey:'tglDiterimaInstansi', label:'Tindak Lanjut', onId:'sla-tl-on', overId:'sla-tl-over', percentId:'sla-tl-persen' },
+    { key:'statusSLATanggapan', deadlineKey:'batasTanggapan', doneKey:'tglSelesai', label:'Tanggapan Pelapor', onId:'sla-tanggapan-on', overId:'sla-tanggapan-over', percentId:'sla-tanggapan-persen' }
   ];
-
   const tbody = document.getElementById('sla-analysis-body');
   if (!tbody) return;
 
   const nowMs = Date.now();
-  const rows = [];
+  const norm = v => String(v || '').trim().toLowerCase().replace(/\s+/g,' ');
+  const onTimeValues = new Set(['dalam sla','selesai dalam sla','tepat waktu','sesuai sla','on time']);
+  const lateValues = new Set(['melewati sla','terlambat','tidak ditanggapi','lewat sla']);
+  const stageRows = [];
 
-  stages.forEach(function(stage) {
-    let onTime = 0;
-    let late = 0;
+  stages.forEach(stage => {
+    let onTime = 0, late = 0;
+    data.forEach(r => {
+      const status = norm(r[stage.key]);
+      const deadline = parseDate(r[stage.deadlineKey]);
+      const completed = parseDate(r[stage.doneKey]);
+      const reportStatus = norm(r.status);
+      const responseKind = norm(r.jenisTanggapan);
 
-    data.forEach(function(r) {
-      let value = String(r[stage.key] || '').trim();
-      const deadline = parseDate(r[stage.dateKey]);
+      // Tahap tanggapan baru dihitung setelah instansi mengirim hasil tindak lanjut.
+      if (stage.key === 'statusSLATanggapan') {
+        const eligible = reportStatus === 'menunggu tanggapan pelapor' ||
+          (reportStatus === 'selesai' && (!!responseKind || !!r.tanggapanPelapor));
+        if (!eligible) return;
+        if (status === 'tidak ditanggapi' || responseKind === 'otomatis selesai') { late++; return; }
+      }
+      // Verifikasi hanya terukur bila telah diverifikasi atau masih menunggu verifikasi.
+      if (stage.key === 'statusSLAVerifikasi') {
+        const verified = !!parseDate(r.tglVerifikasi);
+        const pending = ['belum diverifikasi','baru','menunggu verifikasi'].includes(reportStatus);
+        if (!verified && !pending) return;
+      }
+      // Tindak lanjut hanya terukur sesudah laporan diteruskan ke instansi.
+      if (stage.key === 'statusSLATL' && !['diteruskan ke instansi','dalam proses','menunggu tanggapan pelapor','selesai'].includes(reportStatus)) return;
 
-      // Utamakan status SLA yang tersimpan di sheet.
-      if (value === 'Dalam SLA' || value === 'Selesai Dalam SLA') {
-        onTime++;
+      if (onTimeValues.has(status)) { onTime++; return; }
+      if (lateValues.has(status)) { late++; return; }
+
+      // Jika status tersimpan belum tersedia, gunakan waktu selesai aktual bila ada.
+      if (deadline && completed) {
+        completed <= deadline ? onTime++ : late++;
         return;
       }
-
-      if (value === 'Melewati SLA' || value === 'Terlambat') {
-        late++;
-        return;
-      }
-
-      // Fallback: jika status SLA kosong tetapi batas waktu tersedia,
-      // hitung langsung berdasarkan batas waktu.
-      if (deadline) {
-        if (nowMs > deadline) {
-          late++;
-        } else {
-          onTime++;
-        }
+      // Tahap masih berjalan: hanya hitung sebagai dalam SLA sebelum tenggat.
+      if (deadline && !completed) {
+        nowMs <= deadline ? onTime++ : late++;
       }
     });
 
     const measured = onTime + late;
-    const percent = measured
-      ? Math.round((onTime / measured) * 100)
-      : 0;
-
+    const percent = measured ? Math.round(onTime / measured * 100) : 0;
     const onEl = document.getElementById(stage.onId);
     const overEl = document.getElementById(stage.overId);
     const percentEl = document.getElementById(stage.percentId);
-
     if (onEl) onEl.textContent = onTime;
     if (overEl) overEl.textContent = late;
     if (percentEl) percentEl.textContent = percent + '%';
-
-    rows.push(`
-      <tr class="border-t border-slate-100">
-        <td class="px-4 py-3 font-semibold text-slate-700">${escapeHtml(stage.label)}</td>
-        <td class="px-4 py-3 text-center">${measured}</td>
-        <td class="px-4 py-3 text-center text-green-700 font-semibold">${onTime}</td>
-        <td class="px-4 py-3 text-center text-red-700 font-semibold">${late}</td>
-        <td class="px-4 py-3 text-center font-bold">${percent}%</td>
-      </tr>
-    `);
+    stageRows.push(`<tr class="border-t border-slate-100"><td class="px-4 py-3 font-semibold text-slate-700">${escapeHtml(stage.label)}</td><td class="px-4 py-3 text-center">${measured}</td><td class="px-4 py-3 text-center text-green-700 font-semibold">${onTime}</td><td class="px-4 py-3 text-center text-red-700 font-semibold">${late}</td><td class="px-4 py-3 text-center font-bold">${percent}%</td></tr>`);
   });
-
-  tbody.innerHTML = rows.join('');
+  tbody.innerHTML = stageRows.join('');
 }
-
 
 function renderStatusChart(data) {
 
