@@ -17,7 +17,6 @@
 
   <!-- Chart JS -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
     html {
@@ -2299,8 +2298,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }, 500);
   }
 
-  await loadAgencyDirectory();
-  await loadPublicReports();
+  // Muat data awal secara paralel agar daftar instansi tidak menunggu feed publik.
+  await Promise.allSettled([loadAgencyDirectory(), loadPublicReports()]);
 
   if (currentUser && currentUser.token) {
     try {
@@ -2813,7 +2812,7 @@ async function submitAuth(event) {
         '.'
       );
 
-      await refreshData();
+      await refreshData(true);
 
       updateUIForRole();
 
@@ -2954,32 +2953,35 @@ async function resetForgotPassword(){
 }
 
 async function exportReports(){
-  try{
-    showLoading('Menyiapkan file Excel laporan...');
-    const result=await apiPost('exportReports',{token:currentUser.token});
-    if(!result || !Array.isArray(result.headers) || !Array.isArray(result.rows)) throw new Error('Data export tidak valid.');
-    if(typeof XLSX==='undefined') throw new Error('Komponen Excel belum termuat. Periksa koneksi internet lalu coba lagi.');
-    const aoa=[result.headers].concat(result.rows);
-    const ws=XLSX.utils.aoa_to_sheet(aoa);
-    ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(0,aoa.length-1),c:Math.max(0,result.headers.length-1)}})};
-    ws['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',activePane:'bottomLeft',state:'frozen'};
-    ws['!cols']=result.headers.map(function(h,i){
-      const maxLen=aoa.reduce(function(m,row){return Math.max(m,String(row[i]==null?'':row[i]).length);},String(h).length);
-      return {wch:Math.min(48,Math.max(14,maxLen+2))};
-    });
-    const headerRange=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:0,c:result.headers.length-1}});
-    for(let c=0;c<result.headers.length;c++){
-      const cell=ws[XLSX.utils.encode_cell({r:0,c:c})];
-      if(cell) cell.s={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'245A83'}},alignment:{vertical:'center',wrapText:true}};
+  try {
+    showLoading('Menyiapkan export laporan...');
+    const result = await apiPost('exportReports', {token: currentUser.token});
+    if (!result || !Array.isArray(result.headers) || !Array.isArray(result.rows)) {
+      throw new Error('Format data export dari server tidak sesuai.');
     }
-    ws['!rows']=[{hpt:30}];
-    const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,ws,'Laporan Pengaduan');
-    const base=(result.filename||'Laporan_Pengaduan_MPP').replace(/\.csv$/i,'').replace(/\.xlsx$/i,'');
-    XLSX.writeFile(wb,base+'.xlsx',{bookType:'xlsx',cellStyles:true});
-    showToast('Export Excel berhasil. File .xlsx siap dibuka di Microsoft Excel.');
-  }catch(e){showToast(e.message||'Gagal export laporan.','error');}
-  finally{hideLoading();}
+    // Gunakan titik koma sebagai pemisah kolom agar terbaca sebagai kolom
+    // pada Excel dengan pengaturan regional Indonesia.
+    const csv = [result.headers].concat(result.rows).map(function(row) {
+      return row.map(function(value) {
+        const cell = String(value == null ? '' : value).replace(/\r\n|\r|\n/g, ' ');
+        return '"' + cell.replace(/"/g, '""') + '"';
+      }).join(';');
+    }).join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = result.filename || 'Laporan_Pengaduan_MPP.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    showToast('Export laporan berhasil.');
+  } catch (e) {
+    showToast(e.message || 'Gagal export laporan.', 'error');
+  } finally {
+    hideLoading();
+  }
 }
 
 /* =========================================================
@@ -3580,67 +3582,48 @@ async function loadPrivateReports() {
    REFRESH
 ========================================================= */
 
-async function refreshData() {
-
+async function refreshData(fastLogin = false) {
   try {
+    showLoading(fastLogin ? 'Menyiapkan dashboard...' : 'Memuat data...');
 
-    showLoading('Memuat data...');
+    // Pada login, prioritaskan data privat yang dibutuhkan dashboard.
+    // Data publik diperbarui di latar belakang agar tidak menahan proses masuk.
+    if (fastLogin && currentUser) {
+      await loadPrivateReports();
+      updateUIForRole();
+      renderPelaporReports();
+      renderDashboard();
+      renderPimpinanAnalytics();
+      loadPublicReports().catch(function(err) {
+        console.warn('Pembaruan feed publik tertunda:', err);
+      });
+      return;
+    }
 
-    await loadPublicReports();
+    const jobs = [loadPublicReports()];
+    if (currentUser) jobs.push(loadPrivateReports());
+    const results = await Promise.allSettled(jobs);
 
-    if (currentUser) {
-
-      try {
-
-        await loadPrivateReports();
-
+    if (currentUser && results[1] && results[1].status === 'rejected') {
+      const error = results[1].reason || new Error('Gagal memuat laporan pengguna.');
+      if (error.message && error.message.toLowerCase().includes('sesi')) {
+        handleExpiredSession();
+        return;
       }
-
-      catch (error) {
-
-        if (
-          error.message &&
-          error.message.toLowerCase().includes('sesi')
-        ) {
-
-          handleExpiredSession();
-          return;
-
-        }
-
-        throw error;
-
-      }
-
+      throw error;
     }
 
     updateUIForRole();
-
     renderPelaporReports();
     renderDashboard();
     renderPimpinanAnalytics();
-
-  }
-
-  catch (error) {
-
+  } catch (error) {
     console.error(error);
-
-    showToast(
-      error.message || 'Gagal memuat data.',
-      'error'
-    );
-
-  }
-
-  finally {
-
+    showToast(error.message || 'Gagal memuat data.', 'error');
+  } finally {
     hideLoading();
-
   }
-
 }
-
 
 /* =========================================================
    PUBLIC STATS
