@@ -6984,6 +6984,100 @@ function getRoleSlaTarget(r) {
 
 
 
+function isSlaWorkDay(date) {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return false;
+  }
+
+  const day = date.getDay();
+
+  // Minggu = 0, Sabtu = 6
+  return day !== 0 && day !== 6;
+}
+
+
+function workingMillisecondsBetween(startDate, endDate) {
+
+  if (
+    !(startDate instanceof Date) ||
+    !(endDate instanceof Date) ||
+    isNaN(startDate.getTime()) ||
+    isNaN(endDate.getTime())
+  ) {
+    return 0;
+  }
+
+  if (startDate.getTime() === endDate.getTime()) {
+    return 0;
+  }
+
+  const forward = endDate.getTime() > startDate.getTime();
+
+  let cursor = new Date(
+    forward ? startDate.getTime() : endDate.getTime()
+  );
+
+  const finish = new Date(
+    forward ? endDate.getTime() : startDate.getTime()
+  );
+
+  let total = 0;
+
+  /*
+   * SLA dihitung berdasarkan waktu pada hari kerja saja.
+   * Sabtu dan Minggu bernilai 0 milidetik, sehingga tidak
+   * mengurangi sisa SLA dan tidak menambah keterlambatan.
+   */
+  while (cursor < finish) {
+
+    const nextDay = new Date(cursor);
+    nextDay.setHours(24, 0, 0, 0);
+
+    const segmentEnd =
+      nextDay.getTime() < finish.getTime()
+        ? nextDay
+        : finish;
+
+    if (isSlaWorkDay(cursor)) {
+      total +=
+        segmentEnd.getTime() -
+        cursor.getTime();
+    }
+
+    cursor = segmentEnd;
+
+    if (
+      cursor.getTime() === finish.getTime()
+    ) {
+      break;
+    }
+  }
+
+  return forward ? total : -total;
+}
+
+
+function formatWorkdayDuration(milliseconds) {
+
+  const safeMs = Math.max(0, milliseconds);
+
+  const totalHours =
+    Math.floor(safeMs / 3600000);
+
+  const days =
+    Math.floor(totalHours / 24);
+
+  const hours =
+    totalHours % 24;
+
+  if (days > 0) {
+    return `${days} hari ${hours} jam`;
+  }
+
+  return `${hours} jam`;
+}
+
+
 function formatRemainingSla(deadline) {
 
   const deadlineMs = parseDate(deadline);
@@ -6995,33 +7089,63 @@ function formatRemainingSla(deadline) {
     };
   }
 
-  const diff = deadlineMs - Date.now();
+  const nowMs = Date.now();
 
-  if (diff <= 0) {
-    const overdue = Math.abs(diff);
-    const days = Math.floor(overdue / 86400000);
-    const hours = Math.floor((overdue % 86400000) / 3600000);
+  const deadlineDate =
+    new Date(deadlineMs);
+
+  const nowDate =
+    new Date(nowMs);
+
+  /*
+   * Selisih SLA TIDAK lagi menggunakan:
+   * deadline - Date.now()
+   *
+   * Karena rumus tersebut menghitung Sabtu/Minggu.
+   * Sebagai gantinya hanya interval Senin-Jumat yang dihitung.
+   */
+  const workMs =
+    workingMillisecondsBetween(
+      nowDate,
+      deadlineDate
+    );
+
+  if (workMs < 0) {
+
+    const overdueMs =
+      Math.abs(workMs);
 
     return {
       state: 'over',
-      text: days > 0
-        ? `Terlambat ${days} hari ${hours} jam`
-        : `Terlambat ${hours} jam`
+      text:
+        `Terlambat ${formatWorkdayDuration(overdueMs)}`
     };
   }
 
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
+  const remainingText =
+    formatWorkdayDuration(workMs);
+
+  /*
+   * Hari non-kerja tidak boleh mengubah status menjadi
+   * "Mendekati SLA" hanya karena waktu kalender berjalan.
+   *
+   * Jika sekarang Sabtu/Minggu dan deadline belum lewat,
+   * status tetap Dalam SLA.
+   */
+  const todayIsWorkDay =
+    isSlaWorkDay(nowDate);
+
+  const state =
+    todayIsWorkDay &&
+    workMs <= 24 * 3600000
+      ? 'warning'
+      : 'on';
 
   return {
-    state: days === 0 && hours <= 24 ? 'warning' : 'on',
-    text: days > 0
-      ? `${days} hari ${hours} jam`
-      : `${hours} jam`
+    state: state,
+    text: remainingText
   };
-
 }
-
 
 function roleSlaCell(r) {
 
