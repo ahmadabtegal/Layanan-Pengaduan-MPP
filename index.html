@@ -3765,7 +3765,7 @@ async function loadAgencyDirectory() {
 function getAgencyList() {
   if (agencyDirectory.length) return agencyDirectory.map(function(x){ return x.name; });
   const agencies = [
-    'Manajemen MPP','Kepolisian Resor Tegal Kota','Pengadilan Negeri Kota Tegal','Kejaksaan Negeri Kota Tegal','Kantor Kemenag Tegal','Kantor Pertanahan Kota Tegal','Kantor Imigrasi Kelas II Non TPI Tegal','KPP Pratama Tegal','Pengadilan Agama Tegal','BNN Kota Tegal','Kantor Pengawasan dan Pelayanan Bea dan Cukai Kota Tegal','Loka POM di Kabupaten Tegal','Kanwil Kemenkum Jawa Tengah','BP2MI Jawa Tengah','DPMPTSP Provinsi Jawa Tengah','UPPD/Samsat Kota Tegal','Badan Keuangan Daerah Kota Tegal','Disdikbud Kota Tegal','DPUPR Kota Tegal','Dinas Kesehatan Kota Tegal','Disdukcapil Kota Tegal','Dinas Perhubungan Kota Tegal','Diskop UKM Perdagangan Kota Tegal','Disnakerin Kota Tegal','Disperkim Kota Tegal','DKPPP Kota Tegal','DLH Kota Tegal','DPMPTSP Kota Tegal','Dinas Sosial Kota Tegal','Dinas Arpusda Kota Tegal','LPSE Kota Tegal','Perumda Air Minum Tirta Bahari Kota Tegal','Bank Jateng Cabang Koordinator Tegal','BPJS Ketenagakerjaan Cabang Tegal','BPJS Kesehatan Cabang Tegal','PT. PLN (Persero) Area Tegal','PT. Taspen (Persero) Pekalongan','PT. POS Indonesia (persero) Cabang Tegal','PT. Pegadaian Cabang Tegal','Baznas Kota Tegal','ASITA Tegal'
+    'Manajemen MPP','Kepolisian Resor Tegal Kota','Pengadilan Negeri Kota Tegal','Kejaksaan Negeri Kota Tegal','Kantor Kemenag Tegal','Kantor Pertanahan Kota Tegal','Kantor Imigrasi Kelas II Non TPI Tegal','KPP Pratama Tegal','Pengadilan Agama Tegal','BNN Kota Tegal','Kantor Pengawasan dan Pelayanan Bea dan Cukai Kota Tegal','Loka POM di Kabupaten Tegal','Kanwil Kemenkum Jawa Tengah','BP2MI Jawa Tengah','DPMPTSP Provinsi Jawa Tengah','UPPD/Samsat Kota Tegal','Badan Keuangan Daerah Kota Tegal','Disdikbud Kota Tegal','DPUPR Kota Tegal','Dinas Kesehatan Kota Tegal','Disdukcapil Kota Tegal','Dinas Perhubungan Kota Tegal','Diskop UKM Perdagangan Kota Tegal','Disnakerin Kota Tegal','Disperkim Kota Tegal','DKPPP Kota Tegal','DLH Kota Tegal','DPMPTSP Kota Tegal','Dinas Sosial Kota Tegal','Dinas Arpusda Kota Tegal','LPSE Kota Tegal','Perumda Air Minum Tirta Bahari Kota Tegal','Bank Jateng Cabang Koordinator Tegal','BPJS Ketenagakerjaan Cabang Tegal','BPJS Kesehatan Cabang Tegal','PT. PLN (Persero) Area Tegal','PT. Taspen (Persero) Pekalongan','PT. POS Indonesia (persero) Cabang Tegal','PT. Pegadaian Cabang Tegal','Ketua Baznas Kota Tegal','ASITA Tegal'
   ];
   return agencies;
 }
@@ -6031,57 +6031,48 @@ function renderAgencyTable(data) {
    REPORT DETAIL
 ========================================================= */
 
-function openReportDetailById(
+async function openReportDetailById(
   id,
   internal = false
 ) {
+  const normalizedId = String(id || '').trim();
 
-  let report =
-    reports.find(function(r) {
+  let report = reports.find(function(r) {
+    return String(r.id || '').trim() === normalizedId;
+  });
 
-      return String(r.id || '').trim() === String(id || '').trim();
+  // Laporan publik pada kartu/list hanya memuat data ringkas.
+  // Ambil detail lengkap dari endpoint trackReport agar catatan verifikasi
+  // dan riwayat yang tersimpan ikut tersedia saat modal detail dibuka.
+  const isPublicReport = !report && publicReports.some(function(r) {
+    return String(r.id || '').trim() === normalizedId;
+  });
 
+  if (!report && isPublicReport) {
+    report = publicReports.find(function(r) {
+      return String(r.id || '').trim() === normalizedId;
     });
 
-
-  if (!report) {
-
-    report =
-      publicReports.find(function(r) {
-
-        return String(r.id || '').trim() === String(id || '').trim();
-
-      });
-
+    try {
+      const result = await apiGet('trackReport', { id: normalizedId });
+      if (result && result.status === 'success' && result.report) {
+        report = Object.assign({}, report, result.report);
+      }
+    } catch (error) {
+      console.error('Gagal mengambil detail publik lengkap:', error);
+    }
   }
 
-
   if (!report) {
-
-    showToast(
-      'Detail laporan tidak ditemukan.',
-      'error'
-    );
-
+    showToast('Detail laporan tidak ditemukan.', 'error');
     return;
-
   }
 
+  renderDetail(report, internal);
 
-  renderDetail(
-    report,
-    internal
-  );
-
-
-  const modal =
-    document.getElementById(
-      'detail-modal'
-    );
-
+  const modal = document.getElementById('detail-modal');
   modal.classList.remove('hidden');
   modal.classList.add('flex');
-
 }
 
 
