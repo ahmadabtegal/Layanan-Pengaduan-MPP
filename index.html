@@ -1415,6 +1415,30 @@
 
       </form>
     </div>
+
+    <!-- STATISTIK DAN DAFTAR LAPORAN YANG DIINPUT PETUGAS INI -->
+    <div class="mt-8">
+      <div class="mb-5">
+        <h2 class="text-2xl font-extrabold text-slate-800">Statistik & Laporan yang Saya Input</h2>
+        <p class="text-sm text-slate-500 mt-1">Data dibatasi hanya pada laporan yang dicatat oleh akun Petugas Pengaduan yang sedang masuk.</p>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4"><div class="text-xs text-slate-500">Total</div><div id="officer-total" class="text-2xl font-extrabold mt-1">0</div></div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4"><div class="text-xs text-slate-500">Belum Verifikasi</div><div id="officer-unverified" class="text-2xl font-extrabold text-amber-600 mt-1">0</div></div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4"><div class="text-xs text-slate-500">Diteruskan</div><div id="officer-forwarded" class="text-2xl font-extrabold text-indigo-600 mt-1">0</div></div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4"><div class="text-xs text-slate-500">Dalam Proses</div><div id="officer-process" class="text-2xl font-extrabold text-blue-600 mt-1">0</div></div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4"><div class="text-xs text-slate-500">Menunggu Tanggapan</div><div id="officer-feedback" class="text-2xl font-extrabold text-orange-600 mt-1">0</div></div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4"><div class="text-xs text-slate-500">Selesai</div><div id="officer-complete" class="text-2xl font-extrabold text-green-600 mt-1">0</div></div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
+        <div class="grid md:grid-cols-3 gap-3">
+          <input id="officer-search" oninput="renderPetugasReports()" type="text" placeholder="Cari ID, judul, pelapor, instansi..." class="px-4 py-3 rounded-xl border border-slate-300">
+          <select id="officer-status-filter" onchange="renderPetugasReports()" class="px-4 py-3 rounded-xl border border-slate-300"><option value="">Semua Status</option><option>Belum Diverifikasi</option><option>Terverifikasi</option><option>Diteruskan ke Instansi</option><option>Dalam Proses</option><option>Tindak Lanjut Diberikan</option><option>Menunggu Tanggapan Pelapor</option><option>Selesai</option><option>Ditolak</option><option>Tidak Sesuai Kewenangan</option></select>
+          <button onclick="refreshData()" class="px-4 py-3 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-slate-50"><i class="fa-solid fa-rotate mr-2"></i>Refresh Data</button>
+        </div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden"><div class="table-wrap"><table class="w-full text-sm"><thead class="bg-slate-50 border-b border-slate-200"><tr><th class="text-left px-5 py-4">Laporan</th><th class="text-left px-5 py-4">Pelapor</th><th class="text-left px-5 py-4">Instansi</th><th class="text-left px-5 py-4">Status</th><th class="text-left px-5 py-4">SLA</th><th class="text-left px-5 py-4">Capaian SLA (hari kerja)</th><th class="text-right px-5 py-4">Aksi</th></tr></thead><tbody id="officer-report-table-body"></tbody></table></div></div>
+    </div>
   </div>
 </section>
 
@@ -1592,6 +1616,7 @@
               <th class="text-left px-5 py-4 font-bold text-slate-600">Instansi</th>
               <th class="text-left px-5 py-4 font-bold text-slate-600">Status</th>
               <th class="text-left px-5 py-4 font-bold text-slate-600">SLA</th>
+              <th class="text-left px-5 py-4 font-bold text-slate-600">Capaian SLA (hari kerja)</th>
               <th class="text-right px-5 py-4 font-bold text-slate-600">Aksi</th>
             </tr>
           </thead>
@@ -1843,6 +1868,20 @@
 
       </div>
 
+    </div>
+
+    <!-- DAFTAR LAPORAN UNTUK PIMPINAN -->
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden mt-8">
+      <div class="p-6 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div><h2 class="font-bold text-lg">Daftar Seluruh Laporan Pengaduan</h2><p class="text-sm text-slate-500 mt-1">Daftar laporan beserta capaian SLA pada setiap tahapan.</p></div>
+        <button onclick="refreshData()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 text-sm font-semibold"><i class="fa-solid fa-rotate mr-2"></i>Refresh Data</button>
+      </div>
+      <div class="p-4 border-b border-slate-200 grid md:grid-cols-3 gap-3">
+        <input id="lead-report-search" oninput="renderPimpinanReportList()" type="text" placeholder="Cari ID, judul, pelapor, instansi..." class="px-4 py-3 rounded-xl border border-slate-300">
+        <select id="lead-report-status-filter" onchange="renderPimpinanReportList()" class="px-4 py-3 rounded-xl border border-slate-300"><option value="">Semua Status</option><option>Belum Diverifikasi</option><option>Terverifikasi</option><option>Diteruskan ke Instansi</option><option>Dalam Proses</option><option>Tindak Lanjut Diberikan</option><option>Menunggu Tanggapan Pelapor</option><option>Selesai</option><option>Ditolak</option><option>Tidak Sesuai Kewenangan</option></select>
+        <div class="flex items-center text-xs text-slate-500">Capaian SLA dihitung dalam hari kerja (Sabtu dan Minggu tidak dihitung).</div>
+      </div>
+      <div class="table-wrap"><table class="w-full text-sm"><thead class="bg-slate-50 border-b border-slate-200"><tr><th class="text-left px-5 py-4">Laporan</th><th class="text-left px-5 py-4">Pelapor</th><th class="text-left px-5 py-4">Instansi</th><th class="text-left px-5 py-4">Status</th><th class="text-left px-5 py-4">SLA</th><th class="text-left px-5 py-4">Capaian SLA (hari kerja)</th><th class="text-right px-5 py-4">Aksi</th></tr></thead><tbody id="lead-report-table-body"></tbody></table></div>
     </div>
 
   </div>
@@ -2742,6 +2781,10 @@ function openWelcomeModal() {
   const modal =
     document.getElementById('welcome-modal');
 
+  if (!modal) {
+    showToast('Panel detail laporan tidak ditemukan pada halaman ini.', 'error');
+    return;
+  }
   modal.classList.remove('hidden');
   modal.classList.add('flex');
 
@@ -3609,6 +3652,7 @@ function switchTab(view) {
 
   if (view === 'petugas') {
     preparePetugasForm();
+    renderPetugasReports();
   }
 
   if (view === 'dashboard') {
@@ -5231,6 +5275,131 @@ function renderDashboard() {
 }
 
 
+function getOfficerReports() {
+  if (!currentUser || currentUser.role !== 'petugas_pengaduan') return [];
+  const email = String(currentUser.email || '').trim().toLowerCase();
+  const name = String(currentUser.nama || '').trim().toLowerCase();
+  return reports.filter(function(r) {
+    const byEmail = String(r.diinputOlehEmail || '').trim().toLowerCase();
+    const byName = String(r.diinputOleh || '').trim().toLowerCase();
+    // Utamakan email pencatat agar dua petugas dengan nama sama tidak saling melihat data.
+    if (email && byEmail) return byEmail === email;
+    return !!name && byName === name;
+  });
+}
+
+function renderPetugasReports() {
+  if (!currentUser || currentUser.role !== 'petugas_pengaduan') return;
+  const data = getOfficerReports();
+  const count = function(statuses) { return data.filter(r => statuses.includes(r.status)).length; };
+  const set = function(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; };
+  set('officer-total', data.length);
+  set('officer-unverified', count(['Belum Diverifikasi']));
+  set('officer-forwarded', count(['Diteruskan ke Instansi']));
+  set('officer-process', count(['Terverifikasi','Dalam Proses','Tindak Lanjut Diberikan']));
+  set('officer-feedback', count(['Menunggu Tanggapan Pelapor']));
+  set('officer-complete', count(['Selesai']));
+  const searchEl = document.getElementById('officer-search');
+  const statusEl = document.getElementById('officer-status-filter');
+  const search = String(searchEl && searchEl.value || '').toLowerCase().trim();
+  const status = String(statusEl && statusEl.value || '');
+  const filtered = data.filter(function(r) {
+    const haystack = [r.id,r.judul,r.pelaporNama,r.pelaporEmail,r.instansi].join(' ').toLowerCase();
+    return (!search || haystack.includes(search)) && (!status || r.status === status);
+  }).sort((a,b) => parseDate(b.tanggal) - parseDate(a.tanggal));
+  const tbody = document.getElementById('officer-report-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = filtered.length ? filtered.map(dashboardRow).join('') : `<tr><td colspan="7">${emptyState('Belum ada laporan yang diinput oleh akun ini atau tidak ada hasil pencarian.','fa-inbox')}</td></tr>`;
+}
+
+function renderPimpinanReportList() {
+  if (!currentUser || currentUser.role !== 'pimpinan') return;
+  const searchEl = document.getElementById('lead-report-search');
+  const statusEl = document.getElementById('lead-report-status-filter');
+  const search = String(searchEl && searchEl.value || '').toLowerCase().trim();
+  const status = String(statusEl && statusEl.value || '');
+  const filtered = [...reports].filter(function(r) {
+    const haystack = [r.id,r.judul,r.pelaporNama,r.pelaporEmail,r.instansi].join(' ').toLowerCase();
+    return (!search || haystack.includes(search)) && (!status || r.status === status);
+  }).sort((a,b) => parseDate(b.tanggal) - parseDate(a.tanggal));
+  const tbody = document.getElementById('lead-report-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = filtered.length ? filtered.map(dashboardRow).join('') : `<tr><td colspan="7">${emptyState('Tidak ada laporan yang sesuai.','fa-inbox')}</td></tr>`;
+}
+
+function countWorkdaysBetween(startValue, endValue) {
+  const start = slaDate(startValue);
+  const end = slaDate(endValue);
+  if (!start || !end || end.getTime() < start.getTime()) return null;
+  const cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  let days = 0;
+  // Menghitung hari kerja setelah tanggal mulai, sampai dengan tanggal akhir.
+  cursor.setDate(cursor.getDate() + 1);
+  while (cursor <= last) {
+    if (cursor.getDay() !== 0 && cursor.getDay() !== 6) days++;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return days;
+}
+
+function slaDate(value) {
+  if (!value) return null;
+  if (value instanceof Date && !isNaN(value.getTime())) return value;
+  const str = String(value).trim();
+  // Normalisasi tanggal Indonesia dd/MM/yyyy bila data lama masih memakai format tersebut.
+  const m = str.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
+  if (m) return new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function getSlaAchievement(r) {
+  const today = new Date();
+  const done = r.status === 'Selesai';
+  const verificationEnd = r.tglDisposisi || (r.status === 'Belum Diverifikasi' ? today : (r.tglVerifikasi || today));
+  const verification = r.tanggal ? countWorkdaysBetween(r.tanggal, verificationEnd) : null;
+  const tlStarted = !!r.tglDisposisi;
+  const tlEnd = r.tglDiterimaInstansi || (tlStarted && !['Selesai','Menunggu Tanggapan Pelapor'].includes(r.status) ? today : null);
+  const tindakLanjut = tlStarted && tlEnd ? countWorkdaysBetween(r.tglDisposisi, tlEnd) : null;
+  const responseStarted = !!r.tglDiterimaInstansi;
+  const responseEnd = r.tglSelesai || (responseStarted && !done ? today : null);
+  const tanggapan = responseStarted && responseEnd ? countWorkdaysBetween(r.tglDiterimaInstansi, responseEnd) : null;
+  return { verification, tindakLanjut, tanggapan, done };
+}
+
+function capaianSlaCompactHtml(r) {
+  const a = getSlaAchievement(r);
+  const item = (label, value, target) => {
+    if (value === null || value === undefined) return `<div class="text-xs text-slate-400"><span class="font-semibold">${label}:</span> —</div>`;
+    const color = value <= target ? 'text-emerald-700' : 'text-red-700';
+    return `<div class="text-xs ${color}"><span class="font-semibold">${label}:</span> <b>${value} hari</b></div>`;
+  };
+  return `<div class="space-y-1">${item('Verifikasi',a.verification,3)}${item('TL',a.tindakLanjut,14)}${item('Tanggapan',a.tanggapan,3)}</div>`;
+}
+
+function capaianSlaHtml(r) {
+  const a = getSlaAchievement(r);
+  const stages = [];
+  if (r.tanggal && (r.tglDisposisi || r.status === 'Belum Diverifikasi' || r.tglVerifikasi)) {
+    stages.push({label:'SLA Verifikasi',days:a.verification,target:3,note:'Tanggal laporan → masuk ke instansi'});
+  }
+  if (r.tglDisposisi) {
+    stages.push({label:'SLA Tindak Lanjut',days:a.tindakLanjut,target:14,note:'Masuk ke instansi → hasil tindak lanjut'});
+  }
+  if (r.tglDiterimaInstansi) {
+    stages.push({label:'SLA Tanggapan Pelapor',days:a.tanggapan,target:3,note:'Hasil tindak lanjut → laporan selesai'});
+  }
+  if (!stages.length) return `<div class="text-sm text-slate-500">Capaian SLA akan mulai dihitung setelah tanggal laporan dan tahapan proses tersedia.</div>`;
+  return `<div class="grid md:grid-cols-3 gap-3">${stages.map(function(stage) {
+    const daysText = stage.days === null ? 'Data tanggal belum lengkap' : `${stage.days} hari kerja`;
+    const within = stage.days !== null && stage.days <= stage.target;
+    const badge = stage.days === null ? 'bg-slate-100 text-slate-600' : (within ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+    const statusText = stage.days === null ? 'Belum dapat dihitung' : (within ? 'Dalam SLA' : 'Melewati SLA');
+    return `<div class="rounded-xl border border-slate-200 bg-white p-4"><div class="text-sm font-bold text-slate-800">${stage.label}</div><div class="text-2xl font-extrabold mt-2 text-slate-900">${daysText}</div><div class="text-xs text-slate-500 mt-1">Standar: ${stage.target} hari kerja</div><span class="inline-flex mt-3 px-2.5 py-1 rounded-full text-xs font-bold ${badge}">${statusText}</span><div class="text-xs text-slate-500 mt-2">${stage.note}</div></div>`;
+  }).join('')}</div>`;
+}
+
 function populateDashboardCategoryFilter() {
 
   const select =
@@ -5339,6 +5508,9 @@ function dashboardRow(r) {
         ${roleSlaCell(r)}
       </td>
 
+      <td class="px-5 py-4 min-w-[260px]">
+        ${capaianSlaCompactHtml(r)}
+      </td>
 
       <td class="px-5 py-4 text-right">
 
@@ -5347,7 +5519,9 @@ function dashboardRow(r) {
           ${dashboardQuickAction(r)}
 
           <button
-            onclick="openReportDetailById('${escapeJs(r.id)}', ${internal})"
+            type="button"
+            data-report-id="${escapeHtml(String(r.id || ''))}"
+            onclick="openReportDetailById(this.dataset.reportId, true)"
             class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
           >
             <i class="fa-solid fa-eye mr-1"></i>
@@ -5494,6 +5668,7 @@ function renderPimpinanAnalytics() {
   renderSLAAnalysis(data);
 
   renderAgencyTable(data);
+  renderPimpinanReportList();
 
 }
 
@@ -5864,7 +6039,7 @@ function openReportDetailById(
   let report =
     reports.find(function(r) {
 
-      return String(r.id) === String(id);
+      return String(r.id || '').trim() === String(id || '').trim();
 
     });
 
@@ -5874,7 +6049,7 @@ function openReportDetailById(
     report =
       publicReports.find(function(r) {
 
-        return String(r.id) === String(id);
+        return String(r.id || '').trim() === String(id || '').trim();
 
       });
 
@@ -6365,6 +6540,15 @@ function renderDetail(r, internal) {
         </div>
       </div>`;
   }
+
+  /* CAPAIAN SLA PER PROSES */
+  html += `
+    <div class="mb-6">
+      <h3 class="font-bold text-slate-800 mb-3"><i class="fa-solid fa-chart-line mr-2 text-teal-600"></i>Capaian SLA</h3>
+      <p class="text-xs text-slate-500 mb-3">Durasi dihitung dalam hari kerja; Sabtu dan Minggu tidak dihitung. Standar: verifikasi 3 hari, tindak lanjut 14 hari, tanggapan pelapor 3 hari kerja.</p>
+      ${capaianSlaHtml(r)}
+    </div>
+  `;
 
   /* SLA */
   const detailSlaTarget = r.status === 'Selesai'
